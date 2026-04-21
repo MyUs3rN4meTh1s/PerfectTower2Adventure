@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: rgba(255,255,255,0.08);
+    --accent: #4f8ef7;
+    --accent2: #7c5cbf;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --success: #3ecf8e;
+    --rate: 111;
+    --interval: 53;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 70%;
+    height: 70%;
+    background: radial-gradient(ellipse, rgba(79,142,247,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -30%;
+    right: -10%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(ellipse, rgba(124,92,191,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 680px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+
+  header h1 {
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #e8e8f0 30%, #4f8ef7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+  }
+
+  header p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .config {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .config-field label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .config-field input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.6rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .config-field input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .current-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .current-section label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 99px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.2);
+    transition: box-shadow 0.2s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 5px rgba(79,142,247,0.3);
+  }
+
+  .current-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 70px;
+    text-align: right;
+  }
+
+  .progress-wrap {
+    margin-top: 1rem;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .progress-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.3s ease;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+
+  .metric-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .metric-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .metric-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  .milestones {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .milestones h2 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .milestone-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+
+  .milestone-row:last-child { border-bottom: none; }
+
+  .milestone-name { font-weight: 700; }
+
+  .milestone-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .milestone-status.reached {
+    color: var(--success);
+  }
+
+  .milestone-bar {
+    width: 80px;
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 0 1rem;
+    flex-shrink: 0;
+  }
+
+  .milestone-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+  }
+
+  footer {
+    margin-top: 2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Room Tracker</h1>
+    <p>PROGRESS TRACKER &nbsp;/&nbsp; 111 ROOMS PER 53 MIN</p>
+  </header>
+
+  <div class="config">
+    <div class="config-field">
+      <label>Rooms/session</label>
+      <input type="number" id="cfg-rate" value="111" min="1">
+    </div>
+    <div class="config-field">
+      <label>Minutes/session</label>
+      <input type="number" id="cfg-interval" value="53" min="1">
+    </div>
+    <div class="config-field">
+      <label>Target rooms</label>
+      <input type="number" id="cfg-target" value="33022" min="1">
+    </div>
+  </div>
+
+  <div class="current-section">
+    <label>Current room count</label>
+    <div class="slider-row">
+      <input type="range" id="current" min="0" max="33022" value="0" step="1">
+      <span class="current-val" id="currentVal">0</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>0</span>
+        <span id="pct">0.0%</span>
+        <span id="targetLabel">33,022</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="bar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics" id="metrics"></div>
+
+  <div class="milestones">
+    <h2>Milestones</h2>
+    <div id="milestones"></div>
+  </div>
+
+  <footer>drag slider &nbsp;·&nbsp; edit config fields to recalculate</footer>
+</div>
+
+<script>
+  const els = {
+    current: document.getElementById('current'),
+    currentVal: document.getElementById('currentVal'),
+    pct: document.getElementById('pct'),
+    bar: document.getElementById('bar'),
+    metrics: document.getElementById('metrics'),
+    milestones: document.getElementById('milestones'),
+    targetLabel: document.getElementById('targetLabel'),
+    cfgRate: document.getElementById('cfg-rate'),
+    cfgInterval: document.getElementById('cfg-interval'),
+    cfgTarget: document.getElementById('cfg-target'),
+  };
+
+  function getConfig() {
+    return {
+      rate: Math.max(1, parseInt(els.cfgRate.value) || 111),
+      interval: Math.max(1, parseInt(els.cfgInterval.value) || 53),
+      target: Math.max(1, parseInt(els.cfgTarget.value) || 33022),
+    };
+  }
+
+  function getMilestones(target) {
+    const steps = [];
+    let v = 1000;
+    while (v < target) { steps.push(v); v *= 2; }
+    steps.push(target);
+    return steps;
+  }
+
+  function formatTime(minutes) {
+    const total = Math.round(minutes);
+    const d = Math.floor(total / 1440);
+    const h = Math.floor((total % 1440) / 60);
+    const m = total % 60;
+    let parts = [];
+    if (d) parts.push(d + 'd');
+    if (h) parts.push(h + 'h');
+    if (m || parts.length === 0) parts.push(m + 'm');
+    return parts.join(' ');
+  }
+
+  function update() {
+    const { rate, interval, target } = getConfig();
+    const ratePerMin = rate / interval;
+    const current = Math.min(parseInt(els.current.value) || 0, target);
+    const remaining = Math.max(0, target - current);
+    const pct = Math.min(100, (current / target) * 100);
+    const sessions = Math.ceil(remaining / rate);
+    const minsRemaining = remaining / ratePerMin;
+    const totalMins = target / ratePerMin;
+
+    els.currentVal.textContent = current.toLocaleString();
+    els.pct.textContent = pct.toFixed(1) + '%';
+    els.bar.style.width = pct + '%';
+    els.targetLabel.textContent = target.toLocaleString();
+    els.current.max = target;
+
+    els.metrics.innerHTML = `
+      <div class="metric">
+        <div class="metric-label">Rooms remaining</div>
+        <div class="metric-value">${remaining.toLocaleString()}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Time remaining</div>
+        <div class="metric-value">${formatTime(minsRemaining)}</div>
+        <div class="metric-sub">${sessions.toLocaleString()} sessions</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Total time (full run)</div>
+        <div class="metric-value">${formatTime(totalMins)}</div>
+        <div class="metric-sub">${(totalMins/60).toFixed(1)}h total</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Rate</div>
+        <div class="metric-value">${ratePerMin.toFixed(2)}</div>
+        <div class="metric-sub">rooms/min</div>
+      </div>
+    `;
+
+    const milestones = getMilestones(target);
+    els.milestones.innerHTML = milestones.map(v => {
+      const reached = current >= v;
+      const pctM = Math.min(100, (current / v) * 100);
+      const minsTo = Math.max(0, (v - current) / ratePerMin);
+      return `<div class="milestone-row">
+        <span class="milestone-name">${v.toLocaleString()}</span>
+        <div class="milestone-bar"><div class="milestone-bar-fill" style="width:${pctM}%"></div></div>
+        <span class="milestone-status ${reached ? 'reached' : ''}">${reached ? 'reached' : formatTime(minsTo) + ' away'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  els.current.addEventListener('input', update);
+  [els.cfgRate, els.cfgInterval, els.cfgTarget].forEach(el => el.addEventListener('input', update));
+  update();
+</script>
+</body>
+</html>
