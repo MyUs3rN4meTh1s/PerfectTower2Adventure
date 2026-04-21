@@ -4,7 +4,7 @@ in the app there is the slider, target rooms aka distance and minutes.
 
 slider is the easiest way to pick the number you are at, just drag the slider right or left to change the value, it also supports arrow keys up=+1 down=-1 left=-1 right=+1
 
-Target rooms aka Distance is the total amount of rooms (based on what you are going for, if you are going for full completion input 65536 but if you are going for the 50 armor 50 sword completion input 33022.
+Target rooms aka Distance is the total amount of rooms (based on what you are going for, if you are going for full completion (255) input 65536, but if you are going for the 49 armor 50 sword completion (distance 128) input 33022.
 
 Rooms is how much rooms you are doing they are connected to minutes
 
