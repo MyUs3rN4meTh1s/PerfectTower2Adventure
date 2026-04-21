@@ -2,7 +2,7 @@ Just Simply Donwload the file open it and it should take you to the "app" that w
 
 in the app there is the slider, target rooms aka distance and minutes.
 
-slider is the easiest way to pick the number you are at, just drag the slider right or left to change the value, currently it supports arrow keys up=+1 down=-2 left=-1 right=+1
+slider is the easiest way to pick the number you are at, just drag the slider right or left to change the value, it also supports arrow keys up=+1 down=-2 left=-1 right=+1
 
 Target rooms aka Distance is the total amount of rooms (based on what you are going for, if you are going for full completion input 65536 but if you are going for the 50 armor 50 sword completion input 33022.
 
